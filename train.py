@@ -28,23 +28,26 @@ def scale(mileage, mileage_norm, theta0, theta1):
 
 
 if __name__ == '__main__':
-	# load dataset
-	data = pd.read_csv("data.csv")
-	# get columns from dataset
-	mileage = np.array(data['km'])
-	price = np.array(data['price'])
-	# normalize mileage
-	mileage_norm = (mileage - np.mean(mileage)) / np.std(mileage)
-	# learning rate and number of iterations
-	lr = 1
-	num_iter = 100
-	# executing training function
-	for i in range(num_iter):
-		theta0, theta1 = training(mileage_norm, price, lr)
-	# scaling model hyperparameters
-	theta0, theta1 = scale(mileage, mileage_norm, theta0, theta1)
-	print(theta0, theta1)
-	# saving model hyperparameters for use in prediction
-	with open('model.csv', 'w+') as file:
-		file.write(f'{theta0}, {theta1}')
-		file.close()
+	try:
+		# load dataset
+		data = pd.read_csv("data.csv")
+		# get columns from dataset
+		mileage = np.array(data['km'])
+		price = np.array(data['price'])
+		# normalize mileage
+		mileage_norm = (mileage - np.mean(mileage)) / np.std(mileage)
+		# learning rate and number of iterations
+		lr, num_iter = 1, 100
+		# executing training function
+		for i in range(num_iter):
+			theta0, theta1 = training(mileage_norm, price, lr)
+		# scaling model hyperparameters
+		theta0, theta1 = scale(mileage, mileage_norm, theta0, theta1)
+		print(f'theta0: {theta0}\ntheta1: {theta1}')
+		# saving model hyperparameters for use in prediction
+		with open('model.csv', 'w+') as file:
+			file.write(f'{theta0}, {theta1}')
+			file.close()
+	except FileNotFoundError:
+		print("Error: data.csv not found.")
+		exit()
