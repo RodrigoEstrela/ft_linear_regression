@@ -1,51 +1,51 @@
-import csv
-
-def load_dataset(file_path):
-	mileage = []
-	price = []
-	with open(file_path, 'r') as file:
-		reader = csv.reader(file)
-		next(reader)
-		for row in reader:
-			mileage.append(float(row[0]))
-			price.append(float(row[1]))
-	return mileage, price
+import pandas as pd
+import numpy as np
+from predict import estimate_price
 
 
-def normalize_feature(feature):
-	min_val = min(feature)
-	max_val = max(feature)
-	normalized_feature = [(x-min_val)/(max_val - min_val) for x in feature]
-	return normalized_feature
-
-
-def gradient_descent(mileage, price, learning_rate, num_iter):
-	m = len(mileage)
+def training(mileage, price, lr):
+	m = len(price)
 	theta0, theta1 = 0, 0
 
-	for _ in range(num_iter):
-		tmp_theta0 = (learning_rate / m) * sum([(theta0 + theta1 * mileage[i] - price[i]) for i in range(m)])
-		tmp_theta1 = (learning_rate / m) * sum([(theta0 + theta1 * mileage[i] - price[i]) * mileage[i] for i in range(m)])
+	tmp_theta0 = (lr / m) * sum((theta0 + theta1 * mileage - price))
+	tmp_theta1 = (lr / m) * sum((theta0 + theta1 * mileage - price) * mileage)
 
-		theta0 -= tmp_theta0
-		theta1 -= tmp_theta1
+	theta0 -= tmp_theta0
+	theta1 -= tmp_theta1
 
-	print(theta0, theta1)
 	return theta0, theta1
 
-def main():
-	data_file = 'data.csv'
-	learning_rate = 0.001
-	num_iter = 1000
 
-	mileage, price = load_dataset(data_file)
-	normalized_mileage = normalize_feature(mileage)
-	normalized_price = normalize_feature(price)
-	theta0, theta1 = gradient_descent(normalized_mileage, normalized_price, learning_rate, num_iter)
+def scale(mileage, mileage_norm, theta0, theta1):
+	price_lr = estimate_price(mileage_norm, theta0, theta1)
+	p1 = [mileage[0], mileage[23]]
+	p2 = [price_lr[0], price_lr[23]]
 
-	with open('trained_vars.txt', 'w') as file:
-		file.write(f'{theta0}\n{theta1}\n')
+	theta1 = (p2[1] - p2[0]) / (p1[1] - p1[0])
+	theta0 = p2[0] - theta1 * p1[0]
+
+	return theta0, theta1
+
 
 if __name__ == '__main__':
-	main()
-
+	# load dataset
+	data = pd.read_csv("data.csv")
+	# get columns from dataset
+	mileage = np.array(data['km'])
+	price = np.array(data['price'])
+	# normalize mileage
+	mileage_norm = (mileage - np.mean(mileage)) / np.std(mileage)
+	# learning rate and number of iterations
+	lr = 1
+	num_iter = 100
+	# executing training function
+	theta0, theta1 = 0, 0
+	for i in range(num_iter):
+		theta0, theta1 = training(mileage_norm, price, lr)
+	# scaling model hyperparameters
+	theta0, theta1 = scale(mileage, mileage_norm, theta0, theta1)
+	print(theta0, theta1)
+	# saving model hyperparameters for use in prediction
+	with open('model.csv', 'w+') as file:
+		file.write(f'{theta0}, {theta1}')
+		file.close()
