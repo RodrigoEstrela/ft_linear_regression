@@ -39,7 +39,6 @@ if __name__ == '__main__':
 	lr = 1
 	num_iter = 100
 	# executing training function
-	theta0, theta1 = 0, 0
 	for i in range(num_iter):
 		theta0, theta1 = training(mileage_norm, price, lr)
 	# scaling model hyperparameters
